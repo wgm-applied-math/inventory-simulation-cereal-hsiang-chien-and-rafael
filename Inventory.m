@@ -37,11 +37,11 @@ classdef Inventory < handle
 
         % RequestBatchSize - When requesting a batch of material, how many
         % units to request in a batch.
-        RequestBatchSize = 200;
+        RequestBatchSize = 757;
 
         % ReorderPoint - When the amount of material on hand drops to this
         % many units, request another batch.
-        ReorderPoint = 50;
+        ReorderPoint = 150;
 
         % RequestLeadTime - When a batch is requested, it will be this
         % many time step before the batch arrives.
@@ -88,6 +88,8 @@ classdef Inventory < handle
 
         % Fulfilled - List of fulfilled orders.
         Fulfilled = {};
+
+        FracofOrders = {};
     end
     methods
         function obj = Inventory(KWArgs)
@@ -216,8 +218,10 @@ classdef Inventory < handle
             if obj.OnHand >= order.Amount
                 obj.OnHand = obj.OnHand - order.Amount;
                 obj.Fulfilled{end+1} = order;
+                obj.FracofOrders {end+1} = 0;
             else
                 obj.Backlog{end+1} = order;
+                obj.FracofOrders {end+1} = 1;
             end
             maybe_request_more(obj);
         end

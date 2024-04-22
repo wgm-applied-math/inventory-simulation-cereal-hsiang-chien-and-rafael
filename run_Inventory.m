@@ -17,16 +17,16 @@ L = 2;
 h = 0.05/7;
 
 % Reorder point.
-ROP = 50;
+ROP = 150;
 
 % Batch size.
-Q = 200;
+Q = 757;
 
 % How many samples of the simulation to run.
-NumSamples = 100;
+NumSamples = 10;
 
 % Run each sample for this many days.
-MaxTime = 1000;
+MaxTime = 100;
 
 %% Run simulation samples
 
@@ -50,6 +50,9 @@ for SampleNum = 1:NumSamples
         RequestBatchSize=Q);
     run_until(inventory, MaxTime);
     InventorySamples{SampleNum} = inventory;
+    fracoforder(SampleNum) = sum([inventory.FracofOrders{:}])/length(inventory.FracofOrders);
+    fracofdays(SampleNum) = length(inventory.Log.Backlog(inventory.Log.Backlog~=0))/MaxTime;
+    amount{SampleNum} = inventory.Log.Backlog(inventory.Log.Backlog~=0);
 end
 
 %% Collect statistics
@@ -70,7 +73,7 @@ t = tiledlayout(fig,1,1);
 ax = nexttile(t);
 
 % Histogram of the cost per day.
-h = histogram(ax, TotalCosts/MaxTime, Normalization="probability", ...
+h1 = histogram(ax, TotalCosts/MaxTime, Normalization="probability", ...
     BinWidth=5);
 
 % Add title and axis labels
@@ -82,8 +85,14 @@ ylabel(ax, "Probability");
 ylim(ax, [0, 0.5]);
 xlim(ax, [240, 290]);
 
-% Wait for MATLAB to catch up.
-pause(2);
+h3 = histogram(fracofdays);
+title("Fraction of days with a non-zero backlog");
+xlabel("Fraction");
+ylabel("Probability");
+fprintf("Mean fraction of days with a non-zero backlog: %f\n", mean(fracofdays));
 
-% Save figure as a PDF file
-exportgraphics(fig, "Daily cost histogram.pdf");
+h5 = histogram(vertcat(amount{:}));
+title("The backlog amount for days that experience a backlog");
+xlabel("Amount");
+ylabel("Probability");
+fprintf("Mean backlog amount for days that experience a backlog: %f\n", mean(vertcat(amount{:})));
