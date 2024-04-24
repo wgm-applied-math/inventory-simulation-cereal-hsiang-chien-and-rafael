@@ -90,6 +90,7 @@ classdef Inventory < handle
         Fulfilled = {};
 
         FracofOrders = {};
+        DelayTime = {};
     end
     methods
         function obj = Inventory(KWArgs)
@@ -164,7 +165,7 @@ classdef Inventory < handle
             % Schedule the end of the day
             schedule_event(obj, EndDay(Time=obj.Time+0.99));
         end
-
+        
         function handle_shipment_arrival(obj, arrival)
             % handle_shipment_arrival A shipment has arrived in response to
             % a request.
@@ -218,6 +219,7 @@ classdef Inventory < handle
             if obj.OnHand >= order.Amount
                 obj.OnHand = obj.OnHand - order.Amount;
                 obj.Fulfilled{end+1} = order;
+                obj.DelayTime{end+1} = order.Time - order.OriginalTime;
                 obj.FracofOrders {end+1} = 0;
             else
                 obj.Backlog{end+1} = order;
@@ -225,7 +227,7 @@ classdef Inventory < handle
             end
             maybe_request_more(obj);
         end
-
+        
         function handle_end_day(obj, ~)
             % handle_end_day Handle an EndDay event.
             %
