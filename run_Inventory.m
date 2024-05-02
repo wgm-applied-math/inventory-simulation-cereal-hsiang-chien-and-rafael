@@ -17,10 +17,10 @@ L = 2;
 h = 0.05/7;
 
 % Reorder point.
-ROP = 50;
+ROP = 293.5228;
 
 % Batch size.
-Q = 200;
+Q = 757.6279;
 
 % How many samples of the simulation to run.
 NumSamples = 100;
@@ -43,13 +43,16 @@ for SampleNum = 1:NumSamples
     inventory = Inventory( ...
         RequestCostPerBatch=K, ...
         RequestCostPerUnit=c, ...
-        RequestLeadTime=L, ...
         HoldingCostPerUnitPerDay=h, ...
         ReorderPoint=ROP, ...
         OnHand=Q, ...
         RequestBatchSize=Q);
     run_until(inventory, MaxTime);
     InventorySamples{SampleNum} = inventory;
+    fracoforder(SampleNum) = sum([inventory.FracofOrders{:}])/length(inventory.FracofOrders);
+    fracofdays(SampleNum) = length(inventory.Log.Backlog(inventory.Log.Backlog~=0))/MaxTime;
+    delaytime{SampleNum} = inventory.DelayTime;
+    amount{SampleNum} = inventory.Log.Backlog(inventory.Log.Backlog~=0);
 end
 
 %% Collect statistics
@@ -64,26 +67,35 @@ fprintf("Mean daily cost: %f\n", meanDailyCost);
 
 %% Make pictures
 
-% Make a figure with one set of axes.
-fig = figure();
-t = tiledlayout(fig,1,1);
-ax = nexttile(t);
-
 % Histogram of the cost per day.
-h = histogram(ax, TotalCosts/MaxTime, Normalization="probability", ...
-    BinWidth=5);
+h1 = histogram(TotalCosts/MaxTime, Normalization="probability",BinWidth=5);
+title("Daily total cost");
+xlabel("Dollars");
+ylabel("Probability");
 
-% Add title and axis labels
-title(ax, "Daily total cost");
-xlabel(ax, "Dollars");
-ylabel(ax, "Probability");
+h2 = histogram(fracoforder, Normalization="probability", BinWidth=0.005);
+title("Fraction of orders that get backlogged");
+xlabel("Fraction");
+ylabel("Probability");
+fprintf("Mean fraction of orders that get backlogged: %f\n", mean(fracoforder));
 
-% Fix the axis ranges
-ylim(ax, [0, 0.5]);
-xlim(ax, [240, 290]);
+h3 = histogram(fracofdays, Normalization="probability", BinWidth=0.005);
+title("Fraction of days with a non-zero backlog");
+xlabel("Fraction");
+ylabel("Probability");
+fprintf("Mean fraction of days with a non-zero backlog: %f\n", mean(fracofdays));
 
-% Wait for MATLAB to catch up.
-pause(2);
+dtime = horzcat(delaytime{:});
+dtime = cell2mat(dtime);
+dtime = dtime(dtime~=0);
+h4 = histogram(dtime, Normalization="probability");
+title("Delay time of orders that get backlogged");
+xlabel("Time");
+ylabel("Probability");
+fprintf("Mean delay time of orders that get backlogged: %f\n", mean(dtime));
 
-% Save figure as a PDF file
-exportgraphics(fig, "Daily cost histogram.pdf");
+h5 = histogram(vertcat(amount{:}), Normalization="probability", BinWidth=5);
+title("The backlog amount for days that experience a backlog");
+xlabel("Amount");
+ylabel("Probability");
+fprintf("Mean backlog amount for days that experience a backlog: %f\n", mean(vertcat(amount{:})));

@@ -37,11 +37,11 @@ classdef Inventory < handle
 
         % RequestBatchSize - When requesting a batch of material, how many
         % units to request in a batch.
-        RequestBatchSize = 200;
+        RequestBatchSize = 757;
 
         % ReorderPoint - When the amount of material on hand drops to this
         % many units, request another batch.
-        ReorderPoint = 50;
+        ReorderPoint = 150;
 
         % RequestLeadTime - When a batch is requested, it will be this
         % many time step before the batch arrives.
@@ -88,6 +88,9 @@ classdef Inventory < handle
 
         % Fulfilled - List of fulfilled orders.
         Fulfilled = {};
+
+        FracofOrders = {};
+        DelayTime = {};
     end
     methods
         function obj = Inventory(KWArgs)
@@ -162,7 +165,7 @@ classdef Inventory < handle
             % Schedule the end of the day
             schedule_event(obj, EndDay(Time=obj.Time+0.99));
         end
-
+        
         function handle_shipment_arrival(obj, arrival)
             % handle_shipment_arrival A shipment has arrived in response to
             % a request.
@@ -191,7 +194,7 @@ classdef Inventory < handle
             % 
             % If a request has been placed but not yet fulfilled, no
             % additional request is placed.
-
+            obj.RequestLeadTime = randsample(2:5,1,true,[0.1,0.2,0.4,0.3]);
             if ~obj.RequestPlaced && obj.OnHand <= obj.ReorderPoint
                 order_cost = obj.RequestCostPerBatch ...
                     + obj.RequestBatchSize * obj.RequestCostPerUnit;
@@ -216,12 +219,15 @@ classdef Inventory < handle
             if obj.OnHand >= order.Amount
                 obj.OnHand = obj.OnHand - order.Amount;
                 obj.Fulfilled{end+1} = order;
+                obj.DelayTime{end+1} = order.Time - order.OriginalTime;
+                obj.FracofOrders {end+1} = 0;
             else
                 obj.Backlog{end+1} = order;
+                obj.FracofOrders {end+1} = 1;
             end
             maybe_request_more(obj);
         end
-
+        
         function handle_end_day(obj, ~)
             % handle_end_day Handle an EndDay event.
             %
