@@ -17,7 +17,7 @@ L = 2;
 h = 0.05/7;
 
 % Reorder point.
-ROP = 141.5220;
+ROP = 293.5228;
 
 % Batch size.
 Q = 757.6279;
@@ -43,7 +43,6 @@ for SampleNum = 1:NumSamples
     inventory = Inventory( ...
         RequestCostPerBatch=K, ...
         RequestCostPerUnit=c, ...
-        RequestLeadTime=L, ...
         HoldingCostPerUnitPerDay=h, ...
         ReorderPoint=ROP, ...
         OnHand=Q, ...
@@ -73,8 +72,6 @@ h1 = histogram(TotalCosts/MaxTime, Normalization="probability",BinWidth=5);
 title("Daily total cost");
 xlabel("Dollars");
 ylabel("Probability");
-fprintf("Mean daily cost: %f\n", meanDailyCost);
-
 
 h2 = histogram(fracoforder, Normalization="probability", BinWidth=0.005);
 title("Fraction of orders that get backlogged");
@@ -88,13 +85,11 @@ xlabel("Fraction");
 ylabel("Probability");
 fprintf("Mean fraction of days with a non-zero backlog: %f\n", mean(fracofdays));
 
-
-
 dtime = horzcat(delaytime{:});
 dtime = cell2mat(dtime);
 dtime = dtime(dtime~=0);
 h4 = histogram(dtime, Normalization="probability");
-title("Fraction of days with a non-zero backlog");
+title("Delay time of orders that get backlogged");
 xlabel("Time");
 ylabel("Probability");
 fprintf("Mean delay time of orders that get backlogged: %f\n", mean(dtime));

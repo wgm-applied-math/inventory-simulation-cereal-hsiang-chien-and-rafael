@@ -194,7 +194,7 @@ classdef Inventory < handle
             % 
             % If a request has been placed but not yet fulfilled, no
             % additional request is placed.
-
+            obj.RequestLeadTime = randsample(2:5,1,true,[0.1,0.2,0.4,0.3]);
             if ~obj.RequestPlaced && obj.OnHand <= obj.ReorderPoint
                 order_cost = obj.RequestCostPerBatch ...
                     + obj.RequestBatchSize * obj.RequestCostPerUnit;
